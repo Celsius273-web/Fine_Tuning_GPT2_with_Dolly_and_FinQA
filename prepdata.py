@@ -49,7 +49,7 @@ def main():
     dolly_clean = [normalize_dolly(x) for x in ds_dolly["train"] if x.get("response")]
     print(f"loaded {len(dolly_clean)} dolly examples")
 
-    # load finqa (parquet version)
+    # load finqa
     print("loading finqa...")
     ds_finqa = load_dataset("PTPReasoning/finqa")
     finqa_clean = []
