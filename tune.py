@@ -6,62 +6,18 @@ from peft import LoraConfig, get_peft_model, TaskType
 import torch
 
 
-def create_sample_data():
-    """Create sample training data if files don't exist"""
-    os.makedirs("data", exist_ok=True)
-
-    if not os.path.exists("data/train.jsonl"):
-        sample_train_data = [
-            {"instruction": "Write a short story", "input": "about a cat",
-             "output": "Once upon a time, there was a curious cat named Whiskers who loved to explore the garden."},
-            {"instruction": "Explain a concept", "input": "what is photosynthesis",
-             "output": "Photosynthesis is the process by which plants convert sunlight into energy using chlorophyll."},
-            {"instruction": "Answer a question", "input": "what is the capital of France",
-             "output": "The capital of France is Paris."},
-            {"instruction": "Complete the sentence", "input": "The weather today is",
-             "output": "The weather today is sunny and pleasant with a gentle breeze."},
-            {"instruction": "Write a poem", "input": "about the ocean",
-             "output": "Blue waves dance beneath the sky, where seagulls soar and dolphins fly."}
-        ]
-
-        with open("data/train.jsonl", "w") as f:
-            for item in sample_train_data:
-                f.write(json.dumps(item) + "\n")
-        print("Created sample training data at data/train.jsonl")
-
-    if not os.path.exists("data/val.jsonl"):
-        sample_val_data = [
-            {"instruction": "Write a haiku", "input": "about winter",
-             "output": "Snow falls gently down, covering the earth in white, peaceful winter scene."},
-            {"instruction": "Explain", "input": "how rain forms",
-             "output": "Rain forms when water vapor in clouds condenses into droplets that become heavy enough to fall."}
-        ]
-
-        with open("data/val.jsonl", "w") as f:
-            for item in sample_val_data:
-                f.write(json.dumps(item) + "\n")
-        print("Created sample validation data at data/val.jsonl")
-
-
 def main():
-    # Create sample data if needed
-    create_sample_data()
-
-    # Check if data files exist
     if not os.path.exists("data/train.jsonl") or not os.path.exists("data/val.jsonl"):
-        print("Error: Data files not found. Please ensure data/train.jsonl and data/val.jsonl exist.")
+        print("Error: Data files not found make sure data/train.jsonl and data/val.jsonl exist.")
         return
 
-    # Use standard GPT-2 model (much smaller and faster)
     model_name = "gpt2/gpt2_model"
 
     print(f"Loading tokenizer for {model_name}...")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    # Set padding token to EOS token (as mentioned in the article)
     tokenizer.pad_token = tokenizer.eos_token
 
     print(f"Loading model {model_name}...")
-    # Use CPU and float32 for Mac compatibility
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float32,  # Use float32 instead of float16 for CPU
@@ -141,7 +97,6 @@ def main():
     trainer.train()
 
     print("Saving fine-tuned model...")
-    # Save both model and tokenizer
     output_dir = "model/gpt2_lora_finetuned"
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
