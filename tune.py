@@ -1,6 +1,5 @@
 import os
-import json
-from datasets import load_dataset, Dataset
+from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM, Trainer, TrainingArguments
 from peft import LoraConfig, get_peft_model, TaskType
 import torch
@@ -49,11 +48,10 @@ def main():
     print("Tokenizing dataset...")
     tokenized_datasets = dataset.map(tokenize_function, batched=True)
 
-    # LoRA configuration optimized for GPT-2 and Mac
     lora_config = LoraConfig(
         r=8,  # Low rank
         lora_alpha=16,
-        target_modules=["c_attn", "c_proj"],  # GPT-2 attention modules
+        target_modules=["c_attn", "c_proj"],
         lora_dropout=0.1,
         bias="none",
         task_type=TaskType.CAUSAL_LM
@@ -62,19 +60,16 @@ def main():
     print("Applying LoRA adaptation...")
     model = get_peft_model(model, lora_config)
 
-    # Print trainable parameters info
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     all_params = sum(p.numel() for p in model.parameters())
     print(f"Trainable parameters: {trainable_params:,}")
     print(f"All parameters: {all_params:,}")
     print(f"Percentage of trainable parameters: {100 * trainable_params / all_params:.2f}%")
 
-    # Training arguments optimized for Mac
     training_args = TrainingArguments(
         output_dir="finetuneLLM/results",
-        #evaluation_strategy='epoch',  # Evaluate each epoch like in article
         logging_dir="finetuneLLM/logs",
-        per_device_train_batch_size=2,  # Small batch size for Mac
+        per_device_train_batch_size=2,  # Small batch size for
         per_device_eval_batch_size=2,
         gradient_accumulation_steps=2, #Updates batches slower less work
         num_train_epochs=1,

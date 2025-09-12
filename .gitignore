@@ -1,0 +1,19 @@
+# Python virtual environment
+.venv/
+
+# IDE and OS-specific files
+.idea/
+.DS_Store
+*.iml
+
+# Caches
+.cache/
+__pycache__/
+
+# Large data, base models, and training artifacts
+/data/
+/gpt2/
+/finetuneLLM/results/
+
+# Log files
+*.log
