@@ -106,5 +106,3 @@ GPT-2: OpenAI GPT-2
 License
 
 This project is licensed under the MIT License. 
-
-Final Note: Have fun! 
