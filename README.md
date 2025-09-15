@@ -71,6 +71,7 @@ Then reloading train.jsonl and val.jsonl with new data from prepdata.py.
 
 You can play around with finetune.py to change the finetuned model. It is designed with the consideration of computational power.
 Or you can change the model being used, though it will require some changes and more computing power for models with more parameters.
+
 Citing
 
 Here is the official citation of the models and data set. Please cite the datasets and base model if you are going to use this repository. 
