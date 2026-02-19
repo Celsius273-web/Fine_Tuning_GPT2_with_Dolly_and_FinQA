@@ -1,11 +1,7 @@
 GPT-2 Fine-Tuning with LoRA
 
-This project fine-tunes GPT-2 with LoRA adapters on multiple instruction-style datasets, demonstrating noticeable improvements in response quality compared to the base model. It includes scripts that prep data, train, do inference, and output the different responses from the model. 
-
-Overview
-
-The project fine-tunes GPT-2 with LoRA adapters on two datasets:
-
+This project is how I fine-tuned GPT-2 with LoRA adapters on multiple instruction-style datasets, demonstrating noticeable improvements in response quality compared to the base model. It includes scripts that prep data, train, do inference, and output the different responses from the model. 
+Datasets Used:
 Dolly 15k: Instruction-following dataset from Databricks.
 FinQA: Financial reasoning question-answering dataset.
 
