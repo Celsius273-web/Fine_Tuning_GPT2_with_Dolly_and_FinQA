@@ -1,104 +1,88 @@
-GPT-2 Fine-Tuning with LoRA
+# Fine-Tuning GPT-2 with LoRA on Mixed Instruction and Financial Datasets
 
-This project is how I fine-tuned GPT-2 with LoRA adapters on multiple instruction-style datasets, demonstrating noticeable improvements in response quality compared to the base model. It includes scripts that prep data, train, do inference, and output the different responses from the model. 
-Datasets Used:
-Dolly 15k: Instruction-following dataset from Databricks.
-FinQA: Financial reasoning question-answering dataset.
+This project demonstrates how to fine-tune a base language model (GPT-2) using Low-Rank Adaptation (LoRA) on a single local machine. By blending general instruction-following data with domain-specific financial reasoning data, the goal was to learn the practical engineering constraints of parameter-efficient fine-tuning (PEFT) and observe how alignment affects a smaller base model's response structures.
 
-Getting Started
+## Core Goals
 
-Clone this repository and set up a Python virtual environment:
-pip install -r requirements.txt
+* Implement parameter-efficient fine-tuning (PEFT) using Hugging Face and LoRA.
+* Work around local hardware and memory constraints by utilizing gradient accumulation.
+* Evaluate the structural differences in text generation between a raw pre-trained base model and an adapter-aligned model.
+
+## How the Pipeline Works
+
+### 1. Data Ingestion & Formatting (`prepdata.py`)
+
+The data pipeline loads and standardizes two distinct datasets into a unified instruction input output schema:
+
+* **Databricks Dolly 15k:** Used for general, open-ended instruction following.
+* **FinQA:** Financial dataset containing complex tables, surrounding text reports, and quantitative questions.
+
+To prevent out-of-memory errors on a standard laptop, the script automatically truncates massive financial contexts and caps the maximum number of FinQA examples injected into the training pool. It shuffles the merged datasets and splits them into a 95% training set (`train.jsonl`) and a 5% validation set (`val.jsonl`).
+
+### 2. Low-Resource Training Configuration (`tune.py`)
+
+Training was executed entirely locally on a laptop, taking roughly 20 to 30 minutes for a full training pass. To make this possible without crashing local memory, the script uses several optimization techniques:
+
+* **Float32 Precision:** Standardized to float32 execution for stability on laptop CPU/MPS environments.
+* **LoRA Target Modules:** Targets the attention layer query and value projections (`c_attn`) in GPT-2, freezing the rest of the network to minimize trainable parameters.
+* **Micro-Batching:** Combines a small batch size of 2 with gradient accumulation steps to simulate larger batch workloads without massive RAM spikes.
+
+### 3. Inference & Comparison (`inference.py`)
+
+To test performance, both the original raw base model and the newly trained LoRA adapter model are loaded into memory. They are given a uniform list of test prompts (`test.json`), and their raw text generations are saved side-by-side into `model_comparison.json`.
+
+The test evaluation enables `do_sample=True` with a temperature of 0.7 for the fine-tuned model to allow for natural creativity, while evaluating the structural consistency against the base model.
+
+## Dependencies and Setup
+
+Make sure you have Python 3.11 or 3.12 installed. Clone the repository and install the specific library versions required:
+
+```bash
 git clone https://github.com/Celsius273-web/Fine_Tuning_GPT2_with_Dolly_and_FinQA
-Also, I reccomend using Python 3.11 as it works well with all the libraries and models.
+cd Fine_Tuning_GPT2_with_Dolly_and_FinQA
+pip install -r requirements.txt
 
-Make sure your data directory contains:
+```
 
-train.jsonl
-val.jsonl
+Ensure your `requirements.txt` file contains:
 
-As these files are generated with information from datasets that is organized by prepdata.py and put into the jsonl files. 
+```text
+datasets==4.0.0
+peft==0.17.1
+torch==2.8.0
+transformers==4.56.1
 
-Datasets and Models
+```
 
-Datasets:
+## Running the Project
 
-Dolly 15k: Instruction-following examples for GPT-2 fine-tuning
-Source: https://huggingface.co/databricks/databricks-dolly-15k
+1. **Prepare the Datasets:** Download, normalize, and split the data into local JSONL files:
+```bash
+python prepdata.py
 
-
-FinQA: Financial reasoning examples for GPT-2 fine-tuning
-Source: https://huggingface.co/datasets/PTPReasoning/finqa
-
-
-Base Model:
-
-GPT-2
-Source: https://huggingface.co/gpt2
-
-Usage: Base model for LoRA fine-tuning. The fine-tuned LoRA adapter is stored in model/gpt2_lora_finetuned/.
-
-Usage
-
-To prepare the data for the llm to take in use prepdata.py
-
-To train or fine-tune: python3 tune.py
-
-To compare base vs fine-tuned models use: python3 inference.py 
-
-After fine-tuning, compare the performance of the base GPT-2 model and the fine-tuned model by giving each model the prompts (prompts I tested with are in test.json) and the results can be seen in the file model_comparison.json.
-
-Hardware Requirements
-
-CPU: Depends on settings - I did it with 16GB of RAM but 8 might work. I do reccommend looking at the finetune.py to control how much computation will be done (this will impact the model's "learning").
-GPU: Recommended for faster training, but not required
-I used LoRA fine-tuning as it is lightweight, so full model weights are not needed for sharing. 
-
-Results
-
-After fine-tuning, the model shows a clear improvement compared to the base GPT-2. The fine-tuned version is generally better at answering questions directly instead of simply repeating the prompt. For example, when asked to explain “What is a reverse merger?”, the base model mostly repeated the question whereas the fine-tuned model produced a decent definition. In creative prompts like “Create a Poem about the Ocean,” the fine-tuned model generated something instead of looping phrases. The model isn't fantastic as responses can be repetitive or shallow but the difference shows that lightweight fine-tuning with LoRA adapters can noticeably improve GPT-2's responses.
-
-If you want to Expand this Project
-
-You can include additional datasets by:
-
-Adding functionality in prepdata.py to load and organize more data.
-Then reloading train.jsonl and val.jsonl with new data from prepdata.py.
-
-You can play around with finetune.py to change the finetuned model. It is designed with the consideration of computational power.
-Or you can change the model being used, though it will require some changes and more computing power for models with more parameters.
-
-Citing
-
-Here is the official citation of the models and data set. Please cite the datasets and base model if you are going to use this repository. 
-
-Dolly 15k: Databricks Dolly 15k (https://huggingface.co/databricks/databricks-dolly-15k)
-@online{DatabricksBlog2023DollyV2,
-    author    = {Mike Conover and Matt Hayes and Ankit Mathur and Jianwei Xie and Jun Wan and Sam Shah and Ali Ghodsi and Patrick Wendell and Matei Zaharia and Reynold Xin},
-    title     = {Free Dolly: Introducing the World's First Truly Open Instruction-Tuned LLM},
-    year      = {2023},
-    url       = {https://www.databricks.com/blog/2023/04/12/dolly-first-open-commercially-viable-instruction-tuned-llm},
-    urldate   = {2023-06-30}
-}
-
-FinQA: PTPReasoning/FinQA 
-@inproceedings{chen2021finqa,
-          title={FinQA: A Dataset of Numerical Reasoning over Financial Data},
-          author={Chen, Zhiyu and Chen, Wenhu and Smiley, Charese and Shah, Sameena and Borova, Iana and Langdon, Dylan and Moussa, Reema and Beane, Matt and Huang, Ting-Hao and Routledge, Bryan R and others},
-          booktitle={Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing},
-          pages={3697--3711},
-          year={2021}
-        }
+```
 
 
-GPT-2: OpenAI GPT-2 
-@article{radford2019language,
-  title={Language Models are Unsupervised Multitask Learners},
-  author={Radford, Alec and Wu, Jeff and Child, Rewon and Luan, David and Amodei, Dario and Sutskever, Ilya},
-  year={2019}
-}
+2. **Train the Adapter:** Fine-tune GPT-2 via LoRA locally. The adapter weights will save directly to `model/gpt2_lora_finetuned/`:
+```bash
+python tune.py
+
+```
 
 
-License
+3. **Run Evaluation:** Generate responses from both models and compare the results:
+```bash
+python inference.py
 
-This project is licensed under the MIT License. 
+```
+
+
+
+## Key Findings & Results
+
+The fine-tuned adapter shows a massive improvement in structural language capability compared to the raw base model.
+
+* **Syntax Alignment:** Raw GPT-2 frequently falls into infinite repetition loops or simply echoes the input prompt back to the terminal. The LoRA adapter successfully aligns the model to recognize the `Instruction/Input/Output` pattern, generating distinct answers that attempt to resolve the prompt directly.
+* **Financial Data Performance:** While the model’s small scale limits its deep reasoning capacity on complex multi-step math, it shows a noticeable improvement in recognizing and attempting to extract financial concepts from the structured data fields compared to the un-tuned base model.
+
+A full breakdown of prompt outputs can be reviewed inside `model_comparison.json`.
