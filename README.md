@@ -42,15 +42,8 @@ A manual evaluation of **30 test prompts** was conducted to compare the base pre
 
 ## Project Architecture
 
-Dolly-15k + FinQA
-↓
-Preprocessing
-↓
-GPT-2 + LoRA
-↓
-Evaluation
-↓
-Comparison Results
+Dolly-15k + FinQA   ->   Preprocessing   ->   GPT-2 + LoRA   ->   Evaluation   ->   Comparison Results
+
 ---
 
 ## Pipeline & Implementation Details
