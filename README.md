@@ -36,3 +36,51 @@ A manual evaluation of **30 test prompts** was conducted to compare the base pre
 | --- | --- | --- |
 | **"Tell me a story about a robot."**<br> | *"I'm a robot. I'm a robot. I'm a robot. I'm a robot. I'm a robot. I'm a robot..."* *(Repeats infinitely)*<br> | **"Output: A robot is a robot that is designed to do something. It is the type of robot that can be programmed..."** *(Provides structural text)*<br> |
 | **"Describe the role of the Federal Reserve."**<br> | *"The Federal Reserve is a central bank that is responsible for... The Federal Reserve is a central bank that is responsible for..."* *(Stuck in a sentence loop)*<br> | **"Output: The Federal Reserve serves as the central bank of the United States."** *(Provides a direct, concise summary)*<br> |
+| **"How do tariffs influence international trade?"**<br> | *"### What is the impact of tariffs on international trade? ### What is the impact of tariffs on international trade?..."* *(Repeats the prompt question)*<br> | **"The tariff system allows for the protection of tariffs... Examples include the United States tariff on gasoline..."** *(Attempts real contextual explanation)*<br> |
+
+---
+
+## Project Architecture
+
+Dolly-15k + FinQA
+↓
+Preprocessing
+↓
+GPT-2 + LoRA
+↓
+Evaluation
+↓
+Comparison Results
+---
+
+## Pipeline & Implementation Details
+
+### Data Ingestion (`prepdata.py`)
+
+Normalizes Dolly and FinQA datasets into a unified template. To accommodate local memory restraints, long financial documents are strategically truncated, and example counts are capped to build a balanced, stable training dataset.
+
+### Parameter-Efficient Training (`tune.py`)
+
+* **Targeting:** Applies LoRA parameters exclusively onto the query and value attention projection blocks (`c_attn`) to reduce training overhead.
+* **Memory Management:** Leverages micro-batching (Batch size: 2) combined with gradient accumulation steps to maximize local hardware capability.
+
+---
+
+## Setup & Execution
+
+### Installation
+
+Ensure you have Python 3.11+ installed, then run:
+
+```bash
+git clone https://github.com/Celsius273-web/Fine_Tuning_GPT2_with_Dolly_and_FinQA
+cd Fine_Tuning_GPT2_with_Dolly_and_FinQA
+pip install -r requirements.txt
+
+```
+
+### Running the Project
+
+1. **Preprocess Data:** `python prepdata.py`
+2. **Train Adapter:** `python tune.py`
+3. **Run Benchmarks:** `python inference.py`
